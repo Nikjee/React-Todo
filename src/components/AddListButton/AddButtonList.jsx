@@ -1,4 +1,6 @@
 import React from 'react'
+import axios from 'axios'
+
 import List from '../List/List'
 import Badge from '../Badge/Badge'
 
@@ -8,8 +10,15 @@ import './AddListButton.scss'
 
 function AddListButton({ colors, onAdd }) {
   const [visiblePopup, setVisiblePopup] = React.useState(false)
-  const [selectedColor, selectColor] = React.useState(colors[0].id)
+  const [selectedColor, selectColor] = React.useState(3)
+  const [isLoading, setIsLoading] = React.useState(false)
   const [inputValue, setInputValue] = React.useState('')
+
+  React.useEffect(() => {
+    if (Array.isArray(colors)) {
+      selectColor(colors[0].id)
+    }
+  }, [colors])
 
   const onClose = () => {
     setVisiblePopup(false)
@@ -22,13 +31,22 @@ function AddListButton({ colors, onAdd }) {
       alert('Введите название списка')
       return
     }
-    const color = colors.filter((c) => c.id === selectedColor)[0].name
-    onAdd({
-      id: 1,
-      name: inputValue,
-      color,
-    })
-    onClose()
+
+    setIsLoading(true)
+    axios
+      .post('http://localhost:3001/lists', {
+        name: inputValue,
+        colorId: selectedColor,
+      })
+      .then(({ data }) => {
+        const color = colors.filter((c) => c.id === selectedColor)[0].name
+        const listObj = { ...data, color: { name: color } }
+        onAdd(listObj)
+        onClose()
+        setIsLoading(false)
+      })
+      .catch(() => alert('Ошибка при добавлении списка'))
+      .finally(() => setIsLoading(false))
   }
 
   return (
@@ -92,7 +110,7 @@ function AddListButton({ colors, onAdd }) {
             ))}
           </div>
           <button onClick={addList} className="button">
-            Добавить
+            {isLoading ? 'Добавление...' : 'Добавить'}
           </button>
         </div>
       )}

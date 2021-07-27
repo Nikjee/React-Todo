@@ -1,22 +1,46 @@
 import React from 'react'
-import List from './components/List/List'
-import AddListButton from './components/AddListButton/AddButtonList'
-import Tasks from './components/Tasks/Tasks'
+import axios from 'axios'
 
-import DB from './assets/db.json'
+import { List, AddListButton, Tasks } from './components'
 
 function App() {
-  const [lists, setLists] = React.useState(
-    DB.lists.map((item) => {
-      item.color = DB.colors.filter(
-        (color) => color.id === item.colorId
-      )[0].name
-      return item
+  const [lists, setLists] = React.useState(null)
+  const [colors, setColors] = React.useState(null)
+  const [activeItem, setActiveItem] = React.useState(null)
+
+  React.useEffect(() => {
+    axios
+      .get('http://localhost:3001/lists?_expand=color&_embed=tasks')
+      .then(({ data }) => {
+        setLists(data)
+      })
+    axios.get('http://localhost:3001/colors').then(({ data }) => {
+      setColors(data)
     })
-  )
+  }, [])
 
   const onAddList = (obj) => {
     const newList = [...lists, obj]
+    setLists(newList)
+  }
+
+  const onAddTask = (listId, taskObj) => {
+    const newList = lists.map((item) => {
+      if (item.id === lists.id) {
+        item.tasks = [...item.tasks, taskObj]
+      }
+      return item
+    })
+    setLists(newList)
+  }
+
+  const onEditListTitle = (id, title) => {
+    const newList = lists.map((item) => {
+      if (item.id === id) {
+        item.name = title
+      }
+      return item
+    })
     setLists(newList)
   }
 
@@ -45,15 +69,31 @@ function App() {
             },
           ]}
         />
-        <List
-          items={lists}
-          onRemove={(item) => console.log(item)}
-          isRemovable
-        />
-        <AddListButton onAdd={onAddList} colors={DB.colors} />
+        {lists ? (
+          <List
+            items={lists}
+            onRemove={(id) => {
+              const newList = lists.filter((item) => item.id !== id)
+              setLists(newList)
+            }}
+            isRemovable
+            onClickItem={(item) => setActiveItem(item)}
+            activeItem={activeItem}
+          />
+        ) : (
+          'Загрузка...'
+        )}
+
+        <AddListButton onAdd={onAddList} colors={colors} />
       </div>
       <div className="todo__tasks">
-        <Tasks />
+        {lists && activeItem && (
+          <Tasks
+            list={activeItem}
+            onAddTask={onAddTask}
+            onEditTitle={onEditListTitle}
+          />
+        )}
       </div>
     </div>
   )
