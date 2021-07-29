@@ -1,5 +1,6 @@
 import React from 'react'
 import axios from 'axios'
+import { Route, useHistory, useLocation } from 'react-router-dom'
 
 import { List, AddListButton, Tasks } from './components'
 
@@ -7,6 +8,8 @@ function App() {
   const [lists, setLists] = React.useState(null)
   const [colors, setColors] = React.useState(null)
   const [activeItem, setActiveItem] = React.useState(null)
+  let history = useHistory()
+  let location = useLocation()
 
   React.useEffect(() => {
     axios
@@ -19,6 +22,34 @@ function App() {
     })
   }, [])
 
+  React.useEffect(() => {
+    const listId = location.pathname.split('lists/')[1]
+    if (lists) {
+      const list = lists.find((list) => list.id === Number(listId))
+      setActiveItem(list)
+    }
+  }, [lists, location.pathname])
+
+  const onCompleteTask = (listId, taskId, completed) => {
+    const newList = lists.map((list) => {
+      if (list.id === listId) {
+        list.task = list.tasks.map((task) => {
+          if (task.id === taskId) {
+            task.completed = completed
+          }
+          return task
+        })
+      }
+      return list
+    })
+    setLists(newList)
+    axios
+      .patch('http://localhost:3001/tasks/' + taskId, {
+        completed,
+      })
+      .catch(() => alert('Не удалось удалить задачу'))
+  }
+
   const onAddList = (obj) => {
     const newList = [...lists, obj]
     setLists(newList)
@@ -26,12 +57,51 @@ function App() {
 
   const onAddTask = (listId, taskObj) => {
     const newList = lists.map((item) => {
-      if (item.id === lists.id) {
+      if (item.id === listId) {
         item.tasks = [...item.tasks, taskObj]
       }
       return item
     })
     setLists(newList)
+  }
+
+  const onRemoveTask = (listId, taskId) => {
+    if (window.confirm('Вы действительно хотите удалить задачу?')) {
+      const newList = lists.map((item) => {
+        if (item.id === listId) {
+          item.tasks = item.tasks.filter((task) => task.id !== taskId)
+        }
+        return item
+      })
+      setLists(newList)
+      axios.delete('http://localhost:3001/tasks/' + taskId).catch(() => {
+        alert('Не удалось удалить задачу')
+      })
+    }
+  }
+
+  const onEditTask = (listId, taskObj) => {
+    const newTaskText = window.prompt('Текст задачи', taskObj.text)
+
+    if (!newTaskText) return
+
+    const newList = lists.map((list) => {
+      if (list.id === listId) {
+        list.task = list.tasks.map((task) => {
+          if (task.id === taskObj.id) {
+            task.text = newTaskText
+          }
+          return task
+        })
+      }
+      return list
+    })
+    setLists(newList)
+    axios
+      .patch('http://localhost:3001/tasks/' + taskObj.id, {
+        text: newTaskText,
+      })
+      .catch(() => alert('Не удалось удалить задачу'))
   }
 
   const onEditListTitle = (id, title) => {
@@ -48,8 +118,10 @@ function App() {
     <div className="todo">
       <div className="todo__sidebar">
         <List
+          onClickItem={() => history.push(`/`)}
           items={[
             {
+              active: !activeItem,
               icon: (
                 <svg
                   width="18"
@@ -65,7 +137,6 @@ function App() {
                 </svg>
               ),
               name: 'Все задачи',
-              active: true,
             },
           ]}
         />
@@ -73,11 +144,11 @@ function App() {
           <List
             items={lists}
             onRemove={(id) => {
-              const newList = lists.filter((item) => item.id !== id)
-              setLists(newList)
+              const newLists = lists.filter((item) => item.id !== id)
+              setLists(newLists)
             }}
             isRemovable
-            onClickItem={(item) => setActiveItem(item)}
+            onClickItem={(list) => history.push(`/lists/${list.id}`)}
             activeItem={activeItem}
           />
         ) : (
@@ -87,13 +158,33 @@ function App() {
         <AddListButton onAdd={onAddList} colors={colors} />
       </div>
       <div className="todo__tasks">
-        {lists && activeItem && (
-          <Tasks
-            list={activeItem}
-            onAddTask={onAddTask}
-            onEditTitle={onEditListTitle}
-          />
-        )}
+        <Route exact path="/">
+          {lists &&
+            lists.map((list) => (
+              <Tasks
+                key={list.id}
+                list={list}
+                onAddTask={onAddTask}
+                onEditTitle={onEditListTitle}
+                onRemoveTask={onRemoveTask}
+                onEditTask={onEditTask}
+                onCompleteTask={onCompleteTask}
+                withoutEmpty
+              />
+            ))}
+        </Route>
+        <Route path="/lists/:id">
+          {lists && activeItem && (
+            <Tasks
+              list={activeItem}
+              onAddTask={onAddTask}
+              onEditTitle={onEditListTitle}
+              onRemoveTask={onRemoveTask}
+              onEditTask={onEditTask}
+              onCompleteTask={onCompleteTask}
+            />
+          )}
+        </Route>
       </div>
     </div>
   )
