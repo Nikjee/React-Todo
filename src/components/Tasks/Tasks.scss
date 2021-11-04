@@ -84,6 +84,25 @@
       display: flex;
       align-items: center;
       margin-bottom: 15px;
+      padding: 6px 6px;
+      transition: background-color 0.15s ease-in-out;
+
+      &.drag {
+        background-color: rgba(84, 84, 84, 0.2);
+        .checkbox {
+          opacity: 0;
+        }
+      }
+
+      &:hover {
+        // box-shadow: 0 0 5px #545454;
+        background-color: rgba(84, 84, 84, 0.1);
+        .checkbox {
+          label {
+            border-color: #b4b2b2;
+          }
+        }
+      }
 
       &:hover &-actions {
         opacity: 1;
@@ -124,6 +143,7 @@
         margin-left: 15px;
         border: 0;
         font-size: 16px;
+        width: 100%;
       }
     }
   }
