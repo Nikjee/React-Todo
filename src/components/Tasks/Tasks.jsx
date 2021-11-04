@@ -1,6 +1,7 @@
 import React from 'react'
 import axios from 'axios'
 import { Link } from 'react-router-dom'
+import { Droppable } from 'react-beautiful-dnd'
 
 import editSvg from '../../assets/img/edit.svg'
 
@@ -31,31 +32,40 @@ const Tasks = ({
   }
 
   return (
-    <div className="tasks">
+    <div className='tasks'>
       <Link to={`/lists/${list.id}`}>
-        <h2 style={{ color: list.color.hex }} className="tasks__title">
+        <h2 style={{ color: list.color.hex }} className='tasks__title'>
           {list.name}
-          <img onClick={editTitle} src={editSvg} alt="edit"></img>
+          <img onClick={editTitle} src={editSvg} alt='edit'></img>
         </h2>
       </Link>
-
-      <div className="tasks__items">
-        {!withoutEmpty && list.tasks && !list.tasks.length && (
-          <h2>Задачи отсутсвуют</h2>
+      <Droppable droppableId={list.id.toString()}>
+        {(provided) => (
+          <div
+            className='tasks__items'
+            {...provided.droppableProps}
+            ref={provided.innerRef}
+          >
+            {!withoutEmpty && list.tasks && !list.tasks.length && (
+              <h2>Задачи отсутсвуют</h2>
+            )}
+            {list.tasks &&
+              list.tasks.map((task, index) => (
+                <Task
+                  index={index}
+                  key={task.id}
+                  list={list}
+                  onEdit={onEditTask}
+                  onRemove={onRemoveTask}
+                  onComplete={onCompleteTask}
+                  {...task}
+                />
+              ))}
+            {provided.placeholder}
+            <AddTasksForm key={list.id} onAddTask={onAddTask} list={list} />
+          </div>
         )}
-        {list.tasks &&
-          list.tasks.map((task) => (
-            <Task
-              key={task.id}
-              list={list}
-              onEdit={onEditTask}
-              onRemove={onRemoveTask}
-              onComplete={onCompleteTask}
-              {...task}
-            />
-          ))}
-        <AddTasksForm key={list.id} onAddTask={onAddTask} list={list} />
-      </div>
+      </Droppable>
     </div>
   )
 }
