@@ -10,7 +10,6 @@ function App() {
   const [activeItem, setActiveItem] = React.useState(null)
   let history = useHistory()
   let location = useLocation()
-
   React.useEffect(() => {
     axios
       .get('http://localhost:3001/lists?_expand=color&_embed=tasks')
