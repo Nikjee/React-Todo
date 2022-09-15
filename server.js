@@ -1,6 +1,7 @@
+const data = require('./public/db.json')
 const jsonServer = require('json-server')
 const server = jsonServer.create()
-const router = jsonServer.router('./public/db.json')
+const router = jsonServer.router(data)
 const middlewares = jsonServer.defaults({
   static: './build',
 })
