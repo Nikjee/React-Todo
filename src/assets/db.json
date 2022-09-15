@@ -47,13 +47,13 @@
     {
       "id": 3,
       "listId": 2,
-      "text": "ReactJS Hooks (useState, useReducer, useEffect и т.д.)",
+      "text": "React Hooks",
       "completed": true
     },
     {
       "id": 4,
       "listId": 2,
-      "text": "Redux (redux-observable, redux-saga)",
+      "text": "Redux",
       "completed": false
     }
   ],
