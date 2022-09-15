@@ -20,7 +20,7 @@ function List({
     if (window.confirm('Вы действительно хотите удалить список?')) {
       console.log(item.id)
       axios
-        .delete('http://localhost:3001/lists/' + item.id)
+        .delete('/lists/' + item.id)
         .then(() => onRemove(item.id))
     }
   }
